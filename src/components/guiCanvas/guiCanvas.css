@@ -1,0 +1,11 @@
+.canvas-con {
+    height: 600px;
+    width: 700px;
+    background-color: #fcf9f9;
+    border: 1px solid black;
+    right: 10px;
+    position: fixed;
+    Top:10px;
+    bottom: 50px;
+    overflow-x: scroll;
+}
