@@ -2,7 +2,7 @@ import './App.css';
 import GuiCanvas from './components/guiCanvas/guiCanvas.js';
 function App() {
   return (
-    <div>
+    <div className='.App'>
       <GuiCanvas ></GuiCanvas>
     </div> 
   );
