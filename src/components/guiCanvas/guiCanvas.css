@@ -1,11 +1,20 @@
 .canvas-con {
     height: 600px;
-    width: 700px;
-    background-color: #fcf9f9;
-    border: 1px solid black;
-    right: 10px;
-    position: fixed;
-    Top:10px;
-    bottom: 50px;
-    overflow-x: scroll;
+  width: 700px;
+  background-color: #ffffff;
+  border: 1px solid black;
+  right: 100px;
+  Top: 10px;
+  bottom: 50px;
+  overflow-x: scroll;
+  left: 500px;
+  align-content: center;
+  display: grid;
+  position: relative;
+}
+.bar-con {
+  display: block ruby;
+  padding: 10px;
+  height: 300px;
+  width: 10%;
 }
