@@ -3,7 +3,7 @@ import {DecisionTreeClassifier,  setBackend } from 'scikitjs'
 setBackend(tf)
 
 export function rule(x,y){
-    const model = new DecisionTreeClassifier({criterion: 'gini', maxDepth: 7});
+    const model = new DecisionTreeClassifier({criterion: 'gini', maxDepth: 20});
     const dtc = model.fit(x,y);
     //const rules = extractDecisionRules(dtc, featureNames, classNames);
 
