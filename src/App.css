@@ -1,7 +1,26 @@
 .App {
   text-align: center;
-  height: 100%;
-  width: 100%;
-  overflow-x: scroll;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   
+}
+.dis{
+  padding: 20px;
+  text-align:center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.credit{
+  padding: 20px;
+  text-align:center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+body{
+  background-color: rgb(40, 66, 90);
 }
