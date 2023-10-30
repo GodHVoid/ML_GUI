@@ -19,7 +19,7 @@ await model.fit(X,y);
 // through the model
 var preds = model.predict(X);   //Returns a 1D array of predictions
 
-
+console.log(preds);
 
 
 
