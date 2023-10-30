@@ -1,17 +1,20 @@
 .con{
   height: 625px;
-  width: 1000px;
-  background-color: #ffffff;
-  border: 5px solid black;
+  width: 1100px;
+  background-color: #9baee6;
+  border: 3px solid black;
+  border-radius: 10px;
   display: flex;
   position: relative;
   flex-direction: row;
+  margin-top: 20px;
 }
 .canvas-con {
   height: 500px;
-  width: 500px;
+  width: 600px;
   background-color: #ffffff;
   border: 3px solid black;
+  border-radius: 10px;
   align-content: center;
   position: relative;
 }
@@ -24,19 +27,20 @@
   position: relative;
 }
 .para-con {
-  height: 605px;
+  height: 625px;
   width: 250px;
-  Top: 10px;
-  bottom: 50px;
   border: 1px solid black;
-  padding: 10px;
-  display:grid;
-  grid-template-rows: repeat(7, 10fr);
-  grid-gap: 40px; /* add 10px gap between rows and columns */
+  border-right: 3px solid black;
+  display: flex;
+  justify-content: space-evenly;
+  border-radius: 5px;
+  padding: 0px;
+  align-items: center;
+  position: relative;
+  flex-direction: column;
 }
 .button{
-  height: 50px;
-  width: 50px;
+  padding: 5px;
 }
 .para-but {
   height: 600px;
@@ -49,13 +53,51 @@
   justify-content:space-around;
 }
 .right_Side{
-  padding: 0px 100px;
+  padding: 0px 125px;
   display:flex;
   flex-direction: column;
   align-content: center;
   justify-content: center;
 }
+.topbuttom{
+  margin: 10px;
+}
 
 label{
   display: block;
+  font-size: 20px;
+  font-family: 'Gill Sans';
+}
+button{
+  font-family: 'Gill Sans';
+  padding: 5px;
+  font-size: 15px;
+  border-radius: 10px;
+  border: 2px solid black;
+  margin-right: 10px;
+  margin-left: 10px;
+  width: 75px;
+  text-align: center;
+}
+select{
+  font-family: 'Gill Sans';
+  font-size: 20px;
+  border-radius: 10px;
+  border: 2px solid black;
+}
+input{
+  font-family: 'Gill Sans';
+  padding: 5px;
+  font-size: 15px;
+  border-radius: 10px;
+  border: 2px solid black;
+  text-align: center;
+}
+form{
+  display: flex;
+  flex: 0.9;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-content: center;
+  
 }
