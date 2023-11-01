@@ -1,6 +1,6 @@
 // this file is intended to run ml tree algorithms
-import {list_points} from './guiCanvas';
-import { DecisionTreeClassifier } from 'scikitjs';
+// import {list_points} from './guiCanvas';
+// import { DecisionTreeClassifier } from 'scikitjs';
 
 
 function unique(value, index, array) {
@@ -22,7 +22,7 @@ const y = [2, 3, 1, 1, 2];
 DECISION TREE IMPLEMENTATION (FROM SCRATCH)
 */
 // Expects y to be an integer array
-class Node{
+export class Node{
     constructor(feature=null, threshold=null, left=null, right=null, value=null){
         this.feature = feature;
         this.threshold = threshold;
@@ -41,7 +41,7 @@ class Node{
 
 }
 
-export class DecisinTree{
+export class DecisionTree{
     constructor(min_samples_split=2, max_depth=100, n_features=null){
         this.min_samples_split = min_samples_split;
         this.max_depth = max_depth;
