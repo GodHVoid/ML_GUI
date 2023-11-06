@@ -8,7 +8,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "crypto-browserify": "^3.12.0",
-    "crypto-js": "^3.1.9-1",
+    "crypto-js": "^4.2.0",
     "homepage": "{https://github.com/GodHVoid/GUI_ML.git}",
     "ml-random-forest": "^2.1.0",
     "random-forest": "^0.0.7",
