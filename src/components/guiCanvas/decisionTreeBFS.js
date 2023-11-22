@@ -9,7 +9,7 @@ function unique(value, index, array) {
 
 // Expects y to be an integer array
 export class Node{
-    constructor(feature=null, threshold=null, left=null, right=null, value=null){
+    constructor({feature=null, threshold=null, left=null, right=null, value=null}){
         this.feature = feature;
         this.threshold = threshold;
         this.left = left;
@@ -27,8 +27,8 @@ export class Node{
 
 }
 
-export class DecisionTree{
-    constructor(criterion = 'entropy', min_samples_split=2, max_depth=100, n_features=null, max_leaves = null){
+export class DecisionTreeClassifier{
+    constructor({criterion = 'entropy', min_samples_split=2, max_depth=100, n_features=null, max_leaves = null}){
         this.criterion = criterion;
         this.min_samples_split = min_samples_split;
         this.max_depth = max_depth;
@@ -75,12 +75,12 @@ export class DecisionTree{
                 (this.max_leaves !== null && n_leaves + queue.length >= this.max_leaves-1)){
                 
                 let leaf_value = this._most_common_label(y);
-                new_node = new Node(null, null, null, null, leaf_value);
+                new_node = new Node({value: leaf_value});
                 n_leaves++;
                 
             } else {
                 // create parent node for children nodes
-                new_node = new Node();
+                new_node = new Node({});
 
                 // find the best split
                 let [best_feature, best_thresh] = this._best_split(X, y);
@@ -145,8 +145,6 @@ export class DecisionTree{
     }
 
     _information_gain(y, X_column, threshold){
-        let parent_entropy = this._entropy(y);
-
         // create children
         let [left_idxs, right_idxs] = this._split(X_column, threshold);
 
@@ -169,11 +167,29 @@ export class DecisionTree{
             } 
         }
         
-        let [e_l, e_r] = [this._entropy(y_left_idxs), this._entropy(y_right_idxs)];
-        let child_entropy = (n_l/n) * e_l + (n_r/n) * e_r;
+        // let parent_impurity;
+        // let child_impurity;
+
+        // create a mapping to criterion functions
+        const criterionFunctions = {
+            "entropy": this._entropy.bind(this),
+            "gini": this._gini.bind(this)
+        };
+
+        // get impurity of left and right children of parent
+        let i_l = criterionFunctions[this.criterion](y_left_idxs)
+        let i_r = criterionFunctions[this.criterion](y_right_idxs);
+        let child_impurity = (n_l/n) * i_l + (n_r/n) * i_r;
+    
+        
+        let parent_impurity = criterionFunctions[this.criterion](y);
+        
+        
+        // let [e_l, e_r] = [this._entropy(y_left_idxs), this._entropy(y_right_idxs)];
+        // let child_entropy = (n_l/n) * e_l + (n_r/n) * e_r;
 
         // calculating the information gain
-        let information_gain = parent_entropy - child_entropy;
+        let information_gain = parent_impurity - child_impurity;
         
         return information_gain;
     }
@@ -196,7 +212,7 @@ export class DecisionTree{
 
     _create_hist(y){
         // find max value of y
-        let n_labels = Math.max(...y)+1
+        let n_labels = Math.max(...y)+1;
 
         // create a histogram of labels in y
         let hist = new Array(n_labels).fill(0);
@@ -213,7 +229,6 @@ export class DecisionTree{
 
 
     _entropy(y){
-        // get histogram of labels in y
         let hist = this._create_hist(y);
 
         // calculating entropy
@@ -227,8 +242,8 @@ export class DecisionTree{
         return -E;
     }
 
+
     _gini(y){
-        // get histogram of labels in y
         let hist = this._create_hist(y);
         
         // calculating gini impurity
@@ -241,6 +256,7 @@ export class DecisionTree{
 
         return G;
     }
+
 
     _most_common_label(y){
         // returns the most common label of y
