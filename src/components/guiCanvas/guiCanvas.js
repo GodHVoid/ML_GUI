@@ -1,62 +1,31 @@
 import "./guiCanvas.css";
-import { useEffect, useRef, useState } from "react";
-import { rule } from "./ML_Algorithms/decisionTree.js";
-import { Text, StyleSheet } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { rule } from "./ML_Algorithms/algoSelector.js";
 import { Dtparameters, dtpara } from "./Hyperparamters/decisionTreePara";
 import { RFparameters, RFpara } from "./Hyperparamters/RFPara.js";
 
-let [X, Y, points] = [[], [], []];
-let [current_shape_index, startX, startY, color, dataURL, isDragging, preRun] =
-  [];
-//let colors = ["#fa0505", "#3a9904", "#0b3cdb", "#a30581"];
-let point_color = ["#e96666", "#9ce472", "#859adf", "#cc49b0"];
-let count = 0;
-let image = new Image();
-
-// function grid(context){
-//     context.beginPath();
-//     for(var x=0;x<=700;x+=10) {
-//         context.moveTo(x,0);
-//         context.lineTo(x,600);
-//       }
-
-//       for(var y=0; y<=600; y+=10) {
-//         context.moveTo(0,y);
-//         context.lineTo(700,y);
-
-//     }
-//     context.strokeStyle = "black";
-//     context.stroke();
-// }
-
 function GuiCanvas(props) {
   const canvasRef = useRef(null);
-  const contextRef = useRef(null);
-  var setIsDrawing = false;
-  const [selectAlgo, setAlgo] = useState("Decision Tree");
-  const [colors, setColor] = useState("#fa0505");
+  const [points, setPoints] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedPointIndex, setDraggedPointIndex] = useState(null); // Track the index of the dragged point
+  const [selectAlgo, setSelectAlgo] = useState("Decision Tree");
+  const [color, setColor] = useState("#fa0505");
+  const [isMovingPoints, setIsMovingPoints] = useState(false); // State to track if moving points mode is enabled
+  const point_color = ["#e96666", "#9ce472", "#859adf", "#cc49b0"]; // Define point_color array
+  const background_color = ["#fa0505", "#3a9904", "#0b3cdb", "#a30581"];
+
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.width = 600;
     canvas.height = 500;
     const context = canvas.getContext("2d");
     context.lineWidth = 2;
-    contextRef.current = context;
   }, []);
 
-  //   const changeColor = () => {
-  //     const co = document.querySelector(".fruity_buttom");
-  //     co.style.backgroundColor = colors[count];
-  //     if (count < colors.length - 1) {
-  //       count += 1;
-  //       console.log(colors[count]);
-  //     } else {
-  //       count = 0;
-  //     }
-  //     co.style.backgroundColor = colors[count];
-  //   };
-
-  function circles(x, y, context, color) {
+  function drawCircle(x, y, color) {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
     context.strokeStyle = color;
     context.beginPath();
     context.arc(x, y, 4, 0, 2 * Math.PI);
@@ -64,187 +33,145 @@ function GuiCanvas(props) {
     context.fill();
   }
 
-  function redraw() {
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    if (preRun) {
-      image.onload = function () {
-        context.drawImage(image, 0, 0);
-        for (let point of points) {
-          context.beginPath();
-          context.strokeStyle = point.color;
-          context.arc(point.x, point.y, 4, 0, 2 * Math.PI);
-          context.fillStyle = point.color;
-          context.fill();
-        }
-      };
-    } else {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      for (let point of points) {
-        context.beginPath();
-        context.strokeStyle = point.color;
-        context.arc(point.x, point.y, 4, 0, 2 * Math.PI);
-        context.fillStyle = point.color;
-        context.fill();
-      }
-    }
-  }
-
-  //   function button_draw() {
-  //     setIsDrawing ? (setIsDrawing = false) : (setIsDrawing = true);
-  //   }
-
-  let is_mouse_in_shape = function (x, y, point) {
-    let shape_left = point.x - 2;
-    let shape_right = point.x + 2;
-    let shape_top = point.y - 2;
-    let shape_bottom = point.y + 2;
-    if (
-      x >= shape_left &&
-      x <= shape_right &&
-      y >= shape_top &&
-      y <= shape_bottom
-    ) {
-      //console.log('point was clicked');
-      return true;
-    }
-    //console.log('point was not clicked');
-    return false;
-  };
-
-  let mouse_down = ({ nativeEvent }) => {
-    const { offsetX, offsetY } = nativeEvent;
-    nativeEvent.preventDefault();
-    startX = parseInt(offsetX);
-    startY = parseInt(offsetY);
-    let det = false;
-    if (!setIsDrawing) {
-      let index = 0;
-      for (let point of points) {
-        //console.log(points);
-        //console.log((`X coordinates: ${startX}, Y coordinates: ${startY}`));
-        if (is_mouse_in_shape(startX, startY, point)) {
-          current_shape_index = index;
-          isDragging = true;
-          det = true;
-        } else {
-          index++;
-          //console.log('no');
-        }
-      }
-      console.log(`was the point clicked: ${det}`);
-    }
-  };
-
-  const mouse_up = ({ nativeEvent }) => {
-    if (!isDragging) {
-      return;
-    }
-    nativeEvent.preventDefault();
-    isDragging = false;
-  };
-
-  const mouse_out = ({ nativeEvent }) => {
-    if (!isDragging) {
-      return;
-    }
-    nativeEvent.preventDefault();
-    isDragging = false;
-  };
-
-  const mouse_move = ({ nativeEvent }) => {
-    const { offsetX, offsetY } = nativeEvent;
-    if (!isDragging) {
-      return;
-    } else {
-      console.log("move");
-      nativeEvent.preventDefault();
-      let mouseX = parseInt(offsetX);
-      let mouseY = parseInt(offsetY);
-      let dx = mouseX - startX;
-      let dy = mouseY - startY;
-      let current_point = points[current_shape_index];
-      current_point.x += dx;
-      current_point.y += dy;
-      redraw(canvasRef.current);
-      image.src = dataURL;
-      startX = mouseX;
-      startY = mouseY;
-    }
-  };
-
-  const startDrawing = ({ nativeEvent }) => {
-    if (setIsDrawing) {
-      const { offsetX, offsetY } = nativeEvent;
-      points.push({
-        x: offsetX,
-        y: offsetY,
-        color: colors,
-        clsName: count,
-      });
-      circles(offsetX, offsetY, contextRef.current, colors);
-    }
-  };
-
-  const clearAll = () => {
+  function clearCanvas() {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
-    points = [];
-    preRun = false;
-    X = [];
-    Y = [];
-    // After modifying the image data
-    dataURL = canvas.toDataURL();
-    image.src = dataURL;
-    context.lineWidth = 2;
-    contextRef.current = context;
-    context.drawImage(image, 0, 0);
-  };
 
-  const getX = () => {
-    if (points) {
-      for (let point of points) {
-        X.push([point.x, point.y]);
-        Y.push(point.clsName);
-      }
+    // Clear the points state
+    setPoints([]);
+  }
+
+  function handleMouseDown(event) {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+
+    if (isMovingPoints) {
+      // Find the point clicked
+      points.forEach((point, index) => {
+        if (isPointClicked(offsetX, offsetY, point)) {
+          setIsDragging(true);
+          setDraggedPointIndex(index);
+          return;
+        }
+      });
+    } else {
+      // Assign class number based on the color index
+      const classNumber = background_color.indexOf(color);
+
+      const newPoint = {
+        x: offsetX,
+        y: offsetY,
+        color,
+        classNumber,
+      };
+      setPoints([...points, newPoint]);
+      drawCircle(offsetX, offsetY, color);
     }
-  };
+  }
 
-  function drawAreas() {
-    let rules;
-    //console.log(dtpara())
-    if (points.length) {
-      preRun = true;
+  function handleMouseUp() {
+    setIsDragging(false);
+    setDraggedPointIndex(null); // Reset the dragged point index
+  }
+
+  function handleMouseMove(event) {
+    if (isDragging) {
       const canvas = canvasRef.current;
-      //const context = canvas.getContext('2d');
-      getX();
-      // console.log(X)
-      // console.log(Y)
-      selectAlgo === "Decision Tree"
-        ? (rules = rule(X, Y, dtpara(), selectAlgo))
-        : (rules = rule(X, Y, RFpara(), selectAlgo));
-      contextRef.current.clearRect(0, 0, canvas.width, canvas.height);
-      for (let cox = 0; cox < canvas.width; cox++) {
-        for (let coy = 0; coy < canvas.height; coy++) {
-          // Apply the decision tree rules to classify the point
-          const predictedClass = rules.predict([[cox, coy]]);
-          // Map the predicted class to a color
-          color = point_color[predictedClass];
-          // Draw a pixel on the canvas with the determined color
-          contextRef.current.fillStyle = color;
-          contextRef.current.fillRect(cox, coy, 1, 1);
+      const rect = canvas.getBoundingClientRect();
+      const offsetX = event.clientX - rect.left;
+      const offsetY = event.clientY - rect.top;
+
+      const updatedPoints = [...points]; // Copy the points array
+      updatedPoints[draggedPointIndex] = {
+        ...updatedPoints[draggedPointIndex],
+        x: offsetX,
+        y: offsetY,
+      }; // Update the dragged point
+      setPoints(updatedPoints);
+
+      const context = canvas.getContext("2d");
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      updatedPoints.forEach((point) => {
+        drawCircle(point.x, point.y, point.color);
+      });
+    }
+  }
+
+  function isPointClicked(x, y, point) {
+    const distance = Math.sqrt((x - point.x) ** 2 + (y - point.y) ** 2);
+    return distance <= 4;
+  }
+
+  function runAlgorithm() {
+    const [X, Y] = getXY();
+    let rules;
+
+    if (points.length) {
+      const canvas = canvasRef.current;
+      const context = canvas.getContext("2d");
+      const width = canvas.width;
+      const height = canvas.height;
+      const imageData = context.createImageData(width, height);
+      const data = imageData.data;
+
+      // Clear the canvas
+      context.clearRect(0, 0, width, height);
+
+      rules =
+        selectAlgo === "Decision Tree"
+          ? rule(X, Y, dtpara(), selectAlgo)
+          : rule(X, Y, RFpara(), selectAlgo);
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const predictedClass = rules.predict([[x, y]]);
+          const colorIndex = predictedClass * 4; // Each pixel has RGBA values, so multiply the class index by 4
+
+          data[(y * width + x) * 4] = parseInt(
+            point_color[predictedClass].substring(1, 3),
+            16
+          ); // Red
+          data[(y * width + x) * 4 + 1] = parseInt(
+            point_color[predictedClass].substring(3, 5),
+            16
+          ); // Green
+          data[(y * width + x) * 4 + 2] = parseInt(
+            point_color[predictedClass].substring(5, 7),
+            16
+          ); // Blue
+          data[(y * width + x) * 4 + 3] = 255; // Alpha
         }
       }
-      dataURL = canvas.toDataURL();
-      for (let point of points) {
-        contextRef.current.strokeStyle = point.color;
-        contextRef.current.beginPath();
-        contextRef.current.arc(point.x, point.y, 4, 0, 2 * Math.PI);
-        contextRef.current.fillStyle = point.color;
-        contextRef.current.fill();
-      }
+      context.putImageData(imageData, 0, 0);
+
+      // Redraw all points
+      redrawPoints();
     }
+  }
+
+  function redrawPoints() {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    points.forEach((point) => {
+      drawCircle(point.x, point.y, point.color);
+    });
+  }
+
+  function getXY() {
+    let X = [];
+    let Y = [];
+    points.forEach((point) => {
+      X.push([point.x, point.y]);
+      Y.push(point.classNumber);
+    });
+    return [X, Y];
+  }
+
+  function toggleMode() {
+    setIsMovingPoints(!isMovingPoints);
   }
 
   return (
@@ -252,14 +179,17 @@ function GuiCanvas(props) {
       <div className="topbuttom"></div>
       <div className="con">
         <div className="para-con">
-          <Text style={styles.titleText}>{"Algorithm:"}</Text>
-          <select value={selectAlgo} onChange={(e) => setAlgo(e.target.value)}>
+          <label>Algorithm:</label>
+          <select
+            value={selectAlgo}
+            onChange={(e) => setSelectAlgo(e.target.value)}
+          >
             <option value="Decision Tree">Decision Tree</option>
             <option value="Random Forest">Random Forest</option>
           </select>
-          <Text style={styles.titleText}>{"Hyperparameters:"}</Text>
+          <label>Hyperparameters:</label>
           {selectAlgo === "Decision Tree" ? <Dtparameters /> : <RFparameters />}
-          <button className="button" onClick={drawAreas}>
+          <button className="button" onClick={runAlgorithm}>
             Run
           </button>
         </div>
@@ -267,98 +197,37 @@ function GuiCanvas(props) {
           <canvas
             className="canvas-con"
             ref={canvasRef}
-            onMouseDown={mouse_down}
-            onMouseUp={mouse_up}
-            onMouseOut={mouse_out}
-            onMouseMove={mouse_move}
-            onClick={startDrawing}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
           ></canvas>
           <div className="bar-con">
-            <label>Mode:</label>
-            <select>
-              <option
-                onClick={() => {
-                  setIsDrawing = true;
-                }}
-              >
-                Add
-              </option>
-              <option
-                onClick={() => {
-                  setIsDrawing = false;
-                }}
-              >
-                Move
-              </option>
-            </select>
-            <button className="button" onClick={clearAll}>
-              Erase
-            </button>
-            <label>Class: </label>
-            <select
-              value={colors}
-              onChange={(e) => {
-                setColor(e.target.value);
-              }}
-            >
-              <option
-                style={{ backgroundColor: "#fa0505" }}
-                onClick={() => {
-                  count = 0;
-                  setIsDrawing = true;
-                }}
-                value="#fa0505"
-              >
+            <label>Class:</label>
+            <select value={color} onChange={(e) => setColor(e.target.value)}>
+              <option style={{ backgroundColor: "#fa0505" }} value="#fa0505">
                 Red
               </option>
-              <option
-                style={{ backgroundColor: "#3a9904" }}
-                onClick={() => {
-                  count = 1;
-                  setIsDrawing = true;
-                }}
-                value="#3a9904"
-              >
+              <option style={{ backgroundColor: "#3a9904" }} value="#3a9904">
                 Green
               </option>
-              <option
-                style={{ backgroundColor: "#0b3cdb" }}
-                onClick={() => {
-                  count = 2;
-                  setIsDrawing = true;
-                }}
-                value="#0b3cdb"
-              >
+              <option style={{ backgroundColor: "#0b3cdb" }} value="#0b3cdb">
                 Blue
               </option>
-              <option
-                style={{ backgroundColor: "#a30581" }}
-                onClick={() => {
-                  count = 3;
-                  setIsDrawing = true;
-                }}
-                value="#a30581"
-              >
+              <option style={{ backgroundColor: "#a30581" }} value="#a30581">
                 Purple
               </option>
             </select>
+            <button className="button" onClick={clearCanvas}>
+              Erase
+            </button>
+            <button className="button" onClick={toggleMode}>
+              {isMovingPoints ? "Add Point" : "Move Point"}
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = StyleSheet.create({
-  baseText: {
-    fontFamily: "Cochin",
-    textAlign: "center",
-  },
-  titleText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-});
 
 export default GuiCanvas;

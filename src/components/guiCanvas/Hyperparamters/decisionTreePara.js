@@ -1,28 +1,31 @@
 import React, { useState } from "react";
 
+/*  criterion = "entropy",
+    min_samples_split = 2,
+    max_depth = 100,
+    n_features = null,
+    max_leaves = null,
+    oblique = false,
+*/
 let parameters = {
   criterion: "",
-  splitter: "",
-  maxDepth: 0,
+  maxDepth: 1,
   minSamplesSplit: 2,
-  minSamplesLeaf: 1,
-  minImpurityDecrease: 0.0,
+  maxLeaf: 1,
+  oblique: 0,
 };
 
 export function Dtparameters() {
   const [criterion, setCriterion] = useState("gini");
-  const [splitter, setSplipper] = useState("best");
   const [max_depth, setMaxDepth] = useState(0);
   const [minSamplesSplit, setMinSplit] = useState(2);
-  const [minSamplesLeaf, setMinLeaf] = useState(1);
-  const [minImpurity, setImpurity] = useState(0.0);
+  const [maxLeaf, setMinLeaf] = useState(null);
+  const [oblique, setOblique] = useState(0);
 
   parameters.criterion = criterion;
-  parameters.splitter = splitter;
   parameters.maxDepth = max_depth;
   parameters.minSamplesSplit = minSamplesSplit;
-  parameters.minSamplesLeaf = minSamplesLeaf;
-  parameters.minImpurityDecrease = minImpurity;
+  parameters.maxLeaf = maxLeaf;
   return (
     <form>
       <div>
@@ -33,13 +36,7 @@ export function Dtparameters() {
         >
           <option value="gini">Gini</option>
           <option value="entropy">Entropy</option>
-        </select>
-      </div>
-      <div>
-        <label>Splitter: </label>
-        <select value={splitter} onChange={(e) => setSplipper(e.target.value)}>
-          <option value="best">Best</option>
-          <option value="random">Random</option>
+          <option value="Classification Error">Classification Error</option>
         </select>
       </div>
       <div>
@@ -59,19 +56,19 @@ export function Dtparameters() {
         ></input>
       </div>
       <div>
-        <label>Min leafs: </label>
+        <label>Max leafs: </label>
         <input
-          value={minSamplesLeaf}
+          value={maxLeaf}
           placeholder="default is 2"
           onChange={(e) => setMinLeaf(e.target.value)}
         ></input>
       </div>
       <div>
-        <label>Impurity: </label>
+        <label>Oblique: </label>
         <input
-          value={minImpurity}
-          placeholder="default is 0.0"
-          onChange={(e) => setImpurity(e.target.value)}
+          value={oblique}
+          placeholder="0 or 1"
+          onChange={(e) => setOblique(e.target.value)}
         ></input>
       </div>
     </form>
