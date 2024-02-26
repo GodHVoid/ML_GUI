@@ -1,5 +1,4 @@
 // Node class represents a node in the decision tree
-// Node class represents a node in the decision tree
 export class Node {
   constructor({
     feature_indices = null,
