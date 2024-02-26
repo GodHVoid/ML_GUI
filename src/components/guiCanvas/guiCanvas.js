@@ -125,9 +125,12 @@ function GuiCanvas(props) {
           ? rule(X, Y, dtpara(), selectAlgo)
           : rule(X, Y, RFpara(), selectAlgo);
 
+      //console.log("Rules:", rules); // Check the value of rules
+
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           const predictedClass = rules.predict([[x, y]]);
+          //console.log("Predicted Class:", predictedClass); // Check the value of predictedClass
           const colorIndex = predictedClass * 4; // Each pixel has RGBA values, so multiply the class index by 4
 
           data[(y * width + x) * 4] = parseInt(

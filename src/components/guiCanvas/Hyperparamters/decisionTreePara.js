@@ -9,9 +9,10 @@ import React, { useState } from "react";
 */
 let parameters = {
   criterion: "",
+  min_samples_split: 2,
   maxDepth: 1,
-  minSamplesSplit: 2,
-  maxLeaf: 1,
+  n_features: null,
+  maxLeaf: null,
   oblique: 0,
 };
 
@@ -26,6 +27,7 @@ export function Dtparameters() {
   parameters.maxDepth = max_depth;
   parameters.minSamplesSplit = minSamplesSplit;
   parameters.maxLeaf = maxLeaf;
+  parameters.oblique = oblique;
   return (
     <form>
       <div>

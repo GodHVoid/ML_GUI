@@ -1,4 +1,5 @@
 // Node class represents a node in the decision tree
+// Node class represents a node in the decision tree
 export class Node {
   constructor({
     feature_indices = null,
@@ -36,7 +37,6 @@ export class DecisionTreeClassifier {
     this.min_samples_split = min_samples_split;
     this.max_depth = max_depth;
     this.n_features = n_features;
-    this.root = null;
     this.max_leaves = max_leaves;
     this.oblique = oblique;
   }
@@ -46,62 +46,54 @@ export class DecisionTreeClassifier {
     this.n_features = this.n_features
       ? Math.min(X[0].length, this.n_features)
       : X[0].length;
-    this._grow_tree(X, y);
+    this.root = this._grow_tree(X, y, 0);
   }
 
   // Grows the decision tree recursively
-  _grow_tree(X, y) {
+  _grow_tree(X, y, depth) {
     let n_samples = X.length;
     let n_leaves = 0;
-    let queue = [];
-    this.root = new Node({});
-    queue.push({ node: this.root, X: X, y: y, depth: 0 });
+    let node = new Node({});
 
-    while (queue.length) {
-      let { node, X, y, depth } = queue.shift();
-      let n_labels = new Set(y).size;
+    let n_labels = new Set(y).size;
 
-      if (
-        (this.max_depth !== null && depth >= this.max_depth) ||
-        n_labels === 1 ||
-        n_samples < this.min_samples_split ||
-        (this.max_leaves !== null && n_leaves >= this.max_leaves - 1)
-      ) {
-        let leaf_value = this._most_common_label(y);
-        node.value = leaf_value;
-        n_leaves++;
+    if (
+      (this.max_depth !== null && depth >= this.max_depth) ||
+      n_labels === 1 ||
+      n_samples < this.min_samples_split ||
+      (this.max_leaves !== null && n_leaves >= this.max_leaves - 1)
+    ) {
+      let leaf_value = this._most_common_label(y);
+      node.value = leaf_value;
+      n_leaves++;
+    } else {
+      if (this.oblique) {
+        let [feature_indices, weights, threshold] = this._best_split_oblique(
+          X,
+          y
+        );
+        node.feature_indices = feature_indices;
+        node.weights = weights;
+        node.threshold = threshold;
       } else {
-        if (this.oblique !== 0) {
-          let [feature_indices, weights, threshold] = this._best_split_oblique(
-            X,
-            y
-          );
-          node.feature_indices = feature_indices;
-          node.weights = weights;
-          node.threshold = threshold;
-        } else {
-          let [best_feature, best_thresh] = this._best_split(X, y);
-          node.feature_indices = [best_feature];
-          node.weights = [1];
-          node.threshold = best_thresh;
-        }
-        let [left_idxs, right_idxs] = this._split(X, node);
-        node.left = new Node({});
-        node.right = new Node({});
-        queue.push({
-          node: node.left,
-          X: left_idxs.map((i) => X[i]),
-          y: left_idxs.map((i) => y[i]),
-          depth: depth + 1,
-        });
-        queue.push({
-          node: node.right,
-          X: right_idxs.map((i) => X[i]),
-          y: right_idxs.map((i) => y[i]),
-          depth: depth + 1,
-        });
+        let [best_feature, best_thresh] = this._best_split(X, y);
+        node.feature_indices = [best_feature];
+        node.weights = [1];
+        node.threshold = best_thresh;
       }
+      let [left_idxs, right_idxs] = this._split(X, node);
+      node.left = this._grow_tree(
+        left_idxs.map((i) => X[i]),
+        left_idxs.map((i) => y[i]),
+        depth + 1
+      );
+      node.right = this._grow_tree(
+        right_idxs.map((i) => X[i]),
+        right_idxs.map((i) => y[i]),
+        depth + 1
+      );
     }
+    return node;
   }
 
   // Finds the best feature to split on and its threshold for axis-aligned splits
@@ -135,7 +127,7 @@ export class DecisionTreeClassifier {
     let best_weights = null;
     let best_threshold = null;
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) {
       // Try 100 random hyperplanes
       let feature_indices = [];
       let weights = [];
@@ -237,11 +229,20 @@ export class DecisionTreeClassifier {
 
   // Makes decision for oblique splits
   _oblique_decision(x, node) {
-    let sum = 0;
-    for (let i = 0; i < node.feature_indices.length; i++) {
-      sum += x[node.feature_indices[i]] * node.weights[i];
+    if (
+      node.feature_indices &&
+      node.feature_indices.length > 0 &&
+      node.weights &&
+      node.weights.length > 0 &&
+      node.threshold !== null
+    ) {
+      let sum = 0;
+      for (let i = 0; i < node.feature_indices.length; i++) {
+        sum += x[node.feature_indices[i]] * node.weights[i];
+      }
+      return sum <= node.threshold;
     }
-    return sum <= node.threshold;
+    return false;
   }
 
   // Creates a histogram of labels

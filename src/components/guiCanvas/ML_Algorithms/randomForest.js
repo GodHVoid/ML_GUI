@@ -10,12 +10,14 @@ export class RandomForest {
     max_depth,
     min_samples_split = 2,
     n_features = null,
+    oblique = 0,
   }) {
     this.n_trees = n_trees;
     this.max_depth = max_depth;
     this.min_samples_split = min_samples_split;
     this.n_features = n_features;
     this.trees = []; //keep track of the decision trees we created so far
+    this.oblique = oblique;
   }
 
   fit(X, y) {
@@ -26,6 +28,7 @@ export class RandomForest {
         max_depth: this.max_depth,
         min_samples_split: this.min_samples_split,
         n_features: this.n_features,
+        oblique: this.oblique,
       });
 
       let [X_sample, y_sample] = this._bootstrap_samples(X, y);
