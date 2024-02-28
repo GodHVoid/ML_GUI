@@ -11,6 +11,8 @@ function GuiCanvas(props) {
   const [draggedPointIndex, setDraggedPointIndex] = useState(null); // Track the index of the dragged point
   const [selectAlgo, setSelectAlgo] = useState("Decision Tree");
   const [color, setColor] = useState("#fa0505");
+  const [mode, setMode] = useState("Add"); // Add, Move, Erase
+  const [imageData, setImageData] = useState(null); // State to store imageData
   const [isMovingPoints, setIsMovingPoints] = useState(false); // State to track if moving points mode is enabled
   const point_color = ["#e96666", "#9ce472", "#859adf", "#cc49b0"]; // Define point_color array
   const background_color = ["#fa0505", "#3a9904", "#0b3cdb", "#a30581"];
@@ -40,6 +42,8 @@ function GuiCanvas(props) {
 
     // Clear the points state
     setPoints([]);
+    // Clear the imageData state
+    setImageData(null);
   }
 
   function handleMouseDown(event) {
@@ -72,7 +76,21 @@ function GuiCanvas(props) {
     }
   }
 
+  function redrawCanvas() {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    if (imageData) {
+      context.putImageData(imageData, 0, 0);
+    }
+    points.forEach((point) => {
+      drawCircle(point.x, point.y, point.color);
+    });
+  }
+
   function handleMouseUp() {
+    if (isDragging) {
+      runAlgorithm();
+    }
     setIsDragging(false);
     setDraggedPointIndex(null); // Reset the dragged point index
   }
@@ -92,11 +110,7 @@ function GuiCanvas(props) {
       }; // Update the dragged point
       setPoints(updatedPoints);
 
-      const context = canvas.getContext("2d");
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      updatedPoints.forEach((point) => {
-        drawCircle(point.x, point.y, point.color);
-      });
+      redrawCanvas(); // Redraw the canvas with the updated points
     }
   }
 
@@ -106,6 +120,8 @@ function GuiCanvas(props) {
   }
 
   function runAlgorithm() {
+    //new alogrithm is not comnbine by other algorithmn
+    setImageData(null);
     const [X, Y] = getXY();
     let rules;
 
@@ -114,8 +130,10 @@ function GuiCanvas(props) {
       const context = canvas.getContext("2d");
       const width = canvas.width;
       const height = canvas.height;
-      const imageData = context.createImageData(width, height);
-      const data = imageData.data;
+
+      // Create a new ImageData object to hold the pixel data
+      const newImageData = context.createImageData(width, height);
+      const data = newImageData.data;
 
       // Clear the canvas
       context.clearRect(0, 0, width, height);
@@ -148,19 +166,12 @@ function GuiCanvas(props) {
           data[(y * width + x) * 4 + 3] = 255; // Alpha
         }
       }
-      context.putImageData(imageData, 0, 0);
+      context.putImageData(newImageData, 0, 0);
+      setImageData(newImageData);
 
       // Redraw all points
-      redrawPoints();
+      redrawCanvas();
     }
-  }
-
-  function redrawPoints() {
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    points.forEach((point) => {
-      drawCircle(point.x, point.y, point.color);
-    });
   }
 
   function getXY() {

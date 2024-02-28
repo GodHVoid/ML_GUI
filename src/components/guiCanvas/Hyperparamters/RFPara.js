@@ -1,28 +1,33 @@
 import React, { useState } from "react";
 
-// n_trees: 10, // Set the number of trees
-// max_depth: 5, // Set the maximum depth of each tree
-// min_samples_split: 2, // Set the minimum number of samples required to split a node
-// n_features: 2, // Set the number of features to consider when looking for the best split
-
 let parameters = {
   n_trees: 1,
+  criterion: "gini",
   max_depth: 2,
   min_samples_leaf: 1,
   n_features: null,
-  oblique: 0,
+  oblique: null,
 };
 
 export function RFparameters() {
   const [nTrees, setTrees] = useState(1);
-  const [max_depth, setMaxDepth] = useState(0);
+  const [criterion, setCriterion] = useState("gini");
+  const [max_depth, setMaxDepth] = useState(null);
   const [minSamplesLeaf, setMinLeaf] = useState(1);
-  const [oblique, setOblique] = useState(0);
+  const [oblique, setOblique] = useState(null);
 
   parameters.n_trees = nTrees;
+  parameters.criterion = criterion;
   parameters.max_depth = max_depth;
   parameters.min_samples_leaf = minSamplesLeaf;
   parameters.oblique = oblique;
+
+  const handleObliqueChange = (e) => {
+    const value = e.target.value.trim(); // Trim any leading/trailing whitespace
+    // Bug issue with turning off oblique unless it is turn into an int
+    // why? because Javascript
+    setOblique(value === "" ? null : parseInt(value, 10)); // Convert empty string to null
+  };
 
   return (
     <form>
@@ -32,7 +37,18 @@ export function RFparameters() {
           value={nTrees}
           placeholder="default is none"
           onChange={(e) => setTrees(e.target.value)}
-        ></input>
+        />
+      </div>
+      <div>
+        <label>Criterion: </label>
+        <select
+          value={criterion}
+          onChange={(e) => setCriterion(e.target.value)}
+        >
+          <option value="gini">Gini</option>
+          <option value="entropy">Entropy</option>
+          <option value="classification_error">Classification Error</option>
+        </select>
       </div>
       <div>
         <label>Max Depth: </label>
@@ -40,7 +56,7 @@ export function RFparameters() {
           value={max_depth}
           placeholder="default is none"
           onChange={(e) => setMaxDepth(e.target.value)}
-        ></input>
+        />
       </div>
       <div>
         <label>Min splits: </label>
@@ -48,15 +64,15 @@ export function RFparameters() {
           value={minSamplesLeaf}
           placeholder="default is 2"
           onChange={(e) => setMinLeaf(e.target.value)}
-        ></input>
+        />
       </div>
       <div>
         <label>Oblique: </label>
         <input
-          value={oblique}
+          value={oblique !== null ? oblique : ""} // Ensure empty string if null
           placeholder="0 or 1"
-          onChange={(e) => setOblique(e.target.value)}
-        ></input>
+          onChange={handleObliqueChange}
+        />
       </div>
     </form>
   );

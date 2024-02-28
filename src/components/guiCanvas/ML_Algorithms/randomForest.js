@@ -7,12 +7,14 @@ import { DecisionTreeClassifier } from "./decisionTree.js";
 export class RandomForest {
   constructor({
     n_trees,
+    criterion,
     max_depth,
     min_samples_split = 2,
     n_features = null,
-    oblique = 0,
+    oblique = null,
   }) {
     this.n_trees = n_trees;
+    this.criterion = criterion;
     this.max_depth = max_depth;
     this.min_samples_split = min_samples_split;
     this.n_features = n_features;
@@ -24,7 +26,7 @@ export class RandomForest {
     this.trees = [];
     for (let i = 0; i < this.n_trees; i++) {
       let tree = new DecisionTreeClassifier({
-        criterion: "gini",
+        criterion: this.criterion,
         max_depth: this.max_depth,
         min_samples_split: this.min_samples_split,
         n_features: this.n_features,
@@ -81,7 +83,6 @@ export class RandomForest {
     }
 
     // Apply majority voting for classification
-    // You can adjust this logic based on your specific use case
     let final_predictions = predictions.map((tree_preds) => {
       // Count occurrences of each class label
       let counts = {};
@@ -103,11 +104,3 @@ export class RandomForest {
     return final_predictions;
   }
 }
-// predict(X){
-//     let preds = [];
-//     for(tree in this.trees){
-//         preds.push(tree.predict(X));
-//         console.log(preds);
-//     }
-
-// }

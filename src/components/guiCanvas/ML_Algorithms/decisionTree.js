@@ -30,7 +30,7 @@ export class DecisionTreeClassifier {
     max_depth = 100,
     n_features = null,
     max_leaves = null,
-    oblique = 0,
+    oblique = null,
   }) {
     this.criterion = criterion;
     this.min_samples_split = min_samples_split;
@@ -126,11 +126,10 @@ export class DecisionTreeClassifier {
     let best_weights = null;
     let best_threshold = null;
 
+    // 200 random hyperplanes
     for (let i = 0; i < 200; i++) {
-      // Try 100 random hyperplanes
       let feature_indices = [];
       let weights = [];
-
       // Randomly select feature indices and weights
       for (let j = 0; j < 2; j++) {
         // Select 2 features
@@ -179,25 +178,14 @@ export class DecisionTreeClassifier {
 
   // Calculates the information gain
   _information_gain(y, X_column, threshold) {
-    let left_idxs = [];
-    let right_idxs = [];
-
-    for (let i = 0; i < X_column.length; i++) {
-      if (X_column[i] <= threshold) {
-        left_idxs.push(i);
-      } else {
-        right_idxs.push(i);
-      }
+    if (this.criterion === "entropy") {
+      return this._entropy_gain(y, X_column, threshold);
+    } else if (this.criterion === "gini") {
+      return this._gini_gain(y, X_column, threshold);
+    } else if (this.criterion === "classification_error") {
+      return this._classification_error_gain(y, X_column, threshold);
     }
-
-    let p_left = left_idxs.length / y.length;
-    let p_right = right_idxs.length / y.length;
-    let impurity_before_split = this._impurity(y);
-    let impurity_after_split =
-      p_left * this._impurity(y.filter((_, i) => left_idxs.includes(i))) +
-      p_right * this._impurity(y.filter((_, i) => right_idxs.includes(i)));
-
-    return impurity_before_split - impurity_after_split;
+    return 0;
   }
 
   // Calculates impurity (either entropy or Gini)
@@ -208,6 +196,89 @@ export class DecisionTreeClassifier {
       return this._gini(y);
     }
     return 0;
+  }
+
+  // Calculates entropy gain
+  _entropy_gain(y, X_column, threshold) {
+    // Calculate parent entropy
+    let parent_entropy = this._entropy(y);
+
+    // Split data based on the threshold
+    let left_idxs = [];
+    let right_idxs = [];
+    for (let i = 0; i < X_column.length; i++) {
+      if (X_column[i] <= threshold) {
+        left_idxs.push(i);
+      } else {
+        right_idxs.push(i);
+      }
+    }
+
+    // Calculate weighted average of child entropies
+    let p_left = left_idxs.length / y.length;
+    let p_right = right_idxs.length / y.length;
+    let child_entropy =
+      p_left * this._entropy(y.filter((_, i) => left_idxs.includes(i))) +
+      p_right * this._entropy(y.filter((_, i) => right_idxs.includes(i)));
+
+    // Calculate information gain
+    return parent_entropy - child_entropy;
+  }
+
+  // Calculates Gini gain
+  _gini_gain(y, X_column, threshold) {
+    // Calculate parent Gini impurity
+    let parent_gini = this._gini(y);
+
+    // Split data based on the threshold
+    let left_idxs = [];
+    let right_idxs = [];
+    for (let i = 0; i < X_column.length; i++) {
+      if (X_column[i] <= threshold) {
+        left_idxs.push(i);
+      } else {
+        right_idxs.push(i);
+      }
+    }
+
+    // Calculate weighted average of child Gini impurities
+    let p_left = left_idxs.length / y.length;
+    let p_right = right_idxs.length / y.length;
+    let child_gini =
+      p_left * this._gini(y.filter((_, i) => left_idxs.includes(i))) +
+      p_right * this._gini(y.filter((_, i) => right_idxs.includes(i)));
+
+    // Calculate Gini gain
+    return parent_gini - child_gini;
+  }
+
+  // Calculates classification error gain
+  _classification_error_gain(y, X_column, threshold) {
+    // Calculate parent classification error
+    let parent_error = this._classification_error(y);
+
+    // Split data based on the threshold
+    let left_idxs = [];
+    let right_idxs = [];
+    for (let i = 0; i < X_column.length; i++) {
+      if (X_column[i] <= threshold) {
+        left_idxs.push(i);
+      } else {
+        right_idxs.push(i);
+      }
+    }
+
+    // Calculate weighted average of child classification errors
+    let p_left = left_idxs.length / y.length;
+    let p_right = right_idxs.length / y.length;
+    let child_error =
+      p_left *
+        this._classification_error(y.filter((_, i) => left_idxs.includes(i))) +
+      p_right *
+        this._classification_error(y.filter((_, i) => right_idxs.includes(i)));
+
+    // Calculate classification error gain
+    return parent_error - child_error;
   }
 
   // Splits the data based on the given hyperplane
@@ -261,6 +332,13 @@ export class DecisionTreeClassifier {
   _gini(y) {
     let hist = this._create_hist(y);
     return 1 - hist.reduce((acc, p) => acc + Math.pow(p, 2), 0);
+  }
+
+  // Calculates the classification error
+  _classification_error(y) {
+    let hist = this._create_hist(y);
+    let max_freq = Math.max(...hist);
+    return 1 - max_freq;
   }
 
   // Finds the most common label
