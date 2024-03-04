@@ -26,12 +26,12 @@ export class Node {
 export class DecisionTreeClassifier {
   constructor({
     criterion = "entropy",
-    min_samples_split = 2,
-    max_depth = 100,
+    min_samples_split = null,
+    max_depth = null,
     n_features = null,
     max_leaves = null,
     oblique = null,
-  }) {
+  } = {}) {
     this.criterion = criterion;
     this.min_samples_split = min_samples_split;
     this.max_depth = max_depth;
@@ -365,6 +365,41 @@ export class DecisionTreeClassifier {
       preds.push(this._traverse_tree(X[i], this.root));
     }
     return preds;
+  }
+  // Predicts the probabilities of each class for the input data
+  predict_proba(X) {
+    let probs = [];
+    for (let i = 0; i < X.length; i++) {
+      probs.push(this._predict_proba_single(X[i], this.root));
+    }
+    return probs;
+  }
+
+  // Predicts the probabilities of each class for a single sample
+  _predict_proba_single(x, node) {
+    if (node.is_leaf_node()) {
+      // If it's a leaf node, return the probabilities stored in the node
+      return node.value;
+    }
+
+    // Otherwise, traverse the tree to the appropriate child node
+    if (this.oblique) {
+      if (this._oblique_decision(x, node)) {
+        return this._predict_proba_single(x, node.left);
+      } else {
+        return this._predict_proba_single(x, node.right);
+      }
+    } else {
+      if (
+        node.feature_indices &&
+        node.feature_indices.length > 0 &&
+        x[node.feature_indices[0]] <= node.threshold
+      ) {
+        return this._predict_proba_single(x, node.left);
+      } else {
+        return this._predict_proba_single(x, node.right);
+      }
+    }
   }
 
   // Traverses the tree to predict the label for a single sample

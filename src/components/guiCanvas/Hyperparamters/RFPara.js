@@ -1,38 +1,43 @@
 import React, { useState } from "react";
 import "../guiCanvas.css";
 let parameters = {
-  n_trees: 1,
+  n_trees: null,
   criterion: "gini",
-  max_depth: 2,
-  min_samples_leaf: 1,
+  max_depth: null,
+  min_samples_split: null,
+  max_leaves: null,
   n_features: null,
   oblique: null,
 };
 
 export function RFparameters() {
-  const [nTrees, setTrees] = useState(null);
+  const [nTrees, setTrees] = useState("");
   const [criterion, setCriterion] = useState("gini");
-  const [max_depth, setMaxDepth] = useState(null);
-  const [minSamplesLeaf, setMinLeaf] = useState(null);
-  const [oblique, setOblique] = useState(null);
-
-  parameters.n_trees = nTrees;
-  parameters.criterion = criterion;
-  parameters.max_depth = max_depth;
-  parameters.min_samples_leaf = minSamplesLeaf;
-  parameters.oblique = oblique;
+  const [max_depth, setMaxDepth] = useState("");
+  const [minSamplesSplit, setMinSplit] = useState("");
+  const [max_leaves, setMaxLeaves] = useState("");
+  const [oblique, setOblique] = useState("");
 
   const handleObliqueChange = (e) => {
     setOblique(e === "" ? null : parseInt(e, 10));
+    parameters.oblique = e === "" ? null : parseInt(e, 10);
   };
   const handleNTree = (e) => {
     setTrees(e === "" ? null : parseInt(e, 10));
+    parameters.n_trees = e === "" ? null : parseInt(e, 10);
   };
-  const handleMinLeaf = (e) => {
-    setMinLeaf(e === "" ? null : parseInt(e, 10));
+  const handleMinSplit = (e) => {
+    setMinSplit(e === "" ? null : parseInt(e, 10));
+    parameters.min_samples_split = e === "" ? null : parseInt(e, 10);
   };
   const handleMaxDepth = (e) => {
     setMaxDepth(e === "" ? null : parseInt(e, 10));
+    parameters.max_depth = e === "" ? null : parseInt(e, 10);
+  };
+
+  const handleCriterion = (e) => {
+    setCriterion(e);
+    parameters.criterion = e;
   };
 
   return (
@@ -41,7 +46,7 @@ export function RFparameters() {
         <label>Criterion: </label>
         <select
           value={criterion}
-          onChange={(e) => setCriterion(e.target.value)}
+          onChange={(e) => handleCriterion(e.target.value)}
         >
           <option value="gini">Gini</option>
           <option value="entropy">Entropy</option>
@@ -67,9 +72,9 @@ export function RFparameters() {
       <div>
         <label>Min Splits: </label>
         <input
-          value={minSamplesLeaf}
+          value={minSamplesSplit}
           placeholder="default is 2"
-          onChange={(e) => handleMinLeaf(e.target.value)}
+          onChange={(e) => handleMinSplit(e.target.value)}
         />
       </div>
       <div>
@@ -86,8 +91,9 @@ export function RFparameters() {
   );
 }
 
-export function RFpara() {
+export const RFpara = () => {
+  console.log(parameters);
   return parameters;
-}
+};
 
 export default RFparameters;

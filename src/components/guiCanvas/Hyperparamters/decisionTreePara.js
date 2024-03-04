@@ -2,19 +2,19 @@ import React, { useState } from "react";
 
 let parameters = {
   criterion: "",
-  min_samples_split: 2,
-  maxDepth: 2,
-  n_features: null,
-  maxLeaf: 2,
-  oblique: 0,
+  min_samples_split: "",
+  max_depth: "",
+  n_features: "",
+  max_leaves: "",
+  oblique: "",
 };
 
 export function Dtparameters() {
   const [criterion, setCriterion] = useState("gini");
-  const [max_depth, setMaxDepth] = useState(null);
-  const [minSamplesSplit, setMinSplit] = useState(null);
-  const [maxLeaf, setMinLeaf] = useState(null);
-  const [oblique, setOblique] = useState(null);
+  const [max_depth, setMaxDepth] = useState("");
+  const [minSamplesSplit, setMinSplit] = useState("");
+  const [maxLeaf, setMinLeaf] = useState("");
+  const [oblique, setOblique] = useState("");
 
   parameters.criterion = criterion;
   parameters.maxDepth = max_depth;
@@ -24,15 +24,24 @@ export function Dtparameters() {
 
   const handleObliqueChange = (e) => {
     setOblique(e === "" ? null : parseInt(e, 10));
+    parameters.oblique = e === "" ? null : parseInt(e, 10);
   };
   const handleMaxDepth = (e) => {
     setMaxDepth(e === "" ? null : parseInt(e, 10));
+    parameters.max_depth = e === "" ? null : parseInt(e, 10);
   };
   const handleMinSplit = (e) => {
     setMinSplit(e === "" ? null : parseInt(e, 10));
+    parameters.min_samples_split = e === "" ? null : parseInt(e, 10);
   };
   const handleMinLeaf = (e) => {
     setMinLeaf(e === "" ? null : parseInt(e, 10));
+    parameters.max_leaves = e === "" ? null : parseInt(e, 10);
+  };
+
+  const handleCriterion = (e) => {
+    setCriterion(e);
+    parameters.criterion = e;
   };
 
   return (
@@ -41,7 +50,7 @@ export function Dtparameters() {
         <label>Criterion: </label>
         <select
           value={criterion}
-          onChange={(e) => setCriterion(e.target.value)}
+          onChange={(e) => handleCriterion(e.target.value)}
         >
           <option value="gini">Gini</option>
           <option value="entropy">Entropy</option>

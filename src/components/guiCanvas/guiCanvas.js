@@ -5,6 +5,10 @@ import { Dtparameters, dtpara } from "./Hyperparamters/decisionTreePara";
 import { RFparameters, RFpara } from "./Hyperparamters/RFPara.js";
 import { PopupWindow } from "./pointSetting/settingWindow.js";
 import settingImage from "./Icons/settings.png";
+
+const point_color = ["#e96666", "#9ce472", "#859adf", "#cc49b0"]; // Define point_color array
+const background_color = ["#fa0505", "#3a9904", "#0b3cdb", "#a30581"];
+
 function GuiCanvas(props) {
   const canvasRef = useRef(null);
   const [pointOption, setPointOption] = useState(false);
@@ -19,8 +23,8 @@ function GuiCanvas(props) {
   const [imageData, setImageData] = useState(null); // State to store imageData
   const [previousImageData, setPreviousImageData] = useState(null);
   const [isMovingPoints, setIsMovingPoints] = useState(false); // State to track if moving points mode is enabled
-  const point_color = ["#e96666", "#9ce472", "#859adf", "#cc49b0"]; // Define point_color array
-  const background_color = ["#fa0505", "#3a9904", "#0b3cdb", "#a30581"];
+  const [misclassification, setMisclassification] = useState(0);
+  const [entropyLoss, setEntropyLoss] = useState(0.0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -52,6 +56,8 @@ function GuiCanvas(props) {
     setPoints([]);
     // Clear the imageData state
     setImageData(null);
+    setMisclassification(0);
+    setEntropyLoss(0);
   }
 
   function undoCanvas() {
@@ -165,10 +171,11 @@ function GuiCanvas(props) {
           selectAlgo === "Decision Tree"
             ? rule(X, Y, dtpara(), selectAlgo)
             : rule(X, Y, RFpara(), selectAlgo);
-
+        console.log(rules);
+        console.log(RFpara);
         for (let y = 0; y < height; y++) {
           for (let x = 0; x < width; x++) {
-            const predictedClass = rules.predict([[x, y]]);
+            const predictedClass = rules.predict([[x, y]])[0];
             const colorIndex = predictedClass * 4;
 
             data[(y * width + x) * 4] = parseInt(
@@ -190,6 +197,7 @@ function GuiCanvas(props) {
         setImageData(newImageData);
         setPreviousImageData(newImageData);
         setPrevPoints(points);
+        categoricalCrossEntropyLoss(rules, points);
         // Redraw all points
         redrawCanvas();
       }
@@ -227,13 +235,60 @@ function GuiCanvas(props) {
   };
 
   const toggleErase = () => {
-    setUndo(!isUndo);
-    if (isUndo) {
-      undoCanvas();
-    } else {
-      clearCanvas();
-    }
+    // setUndo(!isUndo);
+    // if (isUndo) {
+    //   undoCanvas();
+    // } else {
+    //   clearCanvas();
+    // }
+    clearCanvas();
   };
+
+  function categoricalCrossEntropyLoss(model, points) {
+    let epsilon = 1e-15; // Small constant to prevent taking the logarithm of zero
+    let misCount = 0;
+    let totalLoss = 0;
+
+    if (points.length) {
+      points.forEach((point) => {
+        const predictedProbabilities = model.predict_proba([
+          [point.x, point.y],
+        ]);
+        if (
+          !Array.isArray(predictedProbabilities) ||
+          predictedProbabilities.length === 0
+        ) {
+          console.error("Predicted probabilities are not available or empty.");
+          return; // Handle the error case appropriately
+        }
+
+        const trueClass = point.classNumber;
+
+        // Add epsilon to predicted probabilities to prevent taking the logarithm of zero
+        const adjustedPredictions = predictedProbabilities.map((prob) =>
+          Math.max(prob, epsilon)
+        );
+
+        // Calculate cross-entropy loss
+        let loss = -Math.log(adjustedPredictions[trueClass]);
+        totalLoss += isNaN(loss) ? 0 : loss;
+
+        const predictedClass = adjustedPredictions.indexOf(
+          Math.max(...adjustedPredictions)
+        );
+        if (predictedClass !== trueClass) {
+          misCount++;
+        }
+      });
+    }
+
+    // Compute average loss
+    let averageLoss = points.length > 0 ? totalLoss / points.length : 0;
+    averageLoss = parseFloat(averageLoss.toFixed(2));
+
+    setEntropyLoss(averageLoss);
+    setMisclassification(misCount);
+  }
 
   return (
     <div className="algo">
@@ -294,12 +349,16 @@ function GuiCanvas(props) {
             </button>
           </div>
         </div>
-        <div>
+        <div className="pointError">
           <button className="point-setting" onClick={togglePopup}>
             <img className="settingIcon" src={settingImage} alt="Set" />{" "}
             {/* Replace with your settings icon */}
             {pointOption && <PopupWindow />}
           </button>
+          <p className="loss">
+            Misclassified points: {misclassification}
+            <p>Entropy Loss: {entropyLoss}</p>
+          </p>
         </div>
       </div>
     </div>

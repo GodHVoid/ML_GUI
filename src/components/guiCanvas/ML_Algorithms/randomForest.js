@@ -9,14 +9,16 @@ export class RandomForest {
     n_trees,
     criterion,
     max_depth,
-    min_samples_split = 2,
-    n_features = null,
-    oblique = null,
+    min_samples_split,
+    max_leaves,
+    n_features,
+    oblique,
   }) {
     this.n_trees = n_trees;
     this.criterion = criterion;
     this.max_depth = max_depth;
     this.min_samples_split = min_samples_split;
+    this.max_leaves = max_leaves;
     this.n_features = n_features;
     this.trees = []; //keep track of the decision trees we created so far
     this.oblique = oblique;
@@ -29,6 +31,7 @@ export class RandomForest {
         criterion: this.criterion,
         max_depth: this.max_depth,
         min_samples_split: this.min_samples_split,
+        max_leaves: this.max_leaves,
         n_features: this.n_features,
         oblique: this.oblique,
       });
@@ -102,5 +105,53 @@ export class RandomForest {
     });
 
     return final_predictions;
+  }
+
+  predict_proba(X) {
+    // Check if trees are not trained yet
+    if (this.trees.length === 0) {
+      console.error(
+        "No trees trained. Ensure fit method is called before predict_proba."
+      );
+      return;
+    }
+
+    // Initialize an array to store probabilities from all trees
+    let probabilities = [];
+
+    // Aggregate probabilities from each tree
+    for (let tree of this.trees) {
+      let tree_probabilities = tree.predict_proba(X);
+      probabilities.push(tree_probabilities);
+    }
+
+    // Transpose the probabilities array if probabilities are available
+    if (probabilities.length > 0) {
+      probabilities = probabilities[0].map((_, i) =>
+        probabilities.map((row) => row[i])
+      );
+    } else {
+      console.error(
+        "No probabilities available. Ensure trees are trained and predict_proba method is called correctly."
+      );
+      return;
+    }
+
+    // Combine probabilities from all trees
+    let combined_probabilities = probabilities.map((tree_probs) => {
+      // Calculate average probability for each class label
+      let avg_probs = {};
+      for (let prob of tree_probs) {
+        for (let label in prob) {
+          avg_probs[label] = (avg_probs[label] || 0) + prob[label];
+        }
+      }
+      for (let label in avg_probs) {
+        avg_probs[label] /= tree_probs.length;
+      }
+      return avg_probs;
+    });
+
+    return combined_probabilities;
   }
 }
