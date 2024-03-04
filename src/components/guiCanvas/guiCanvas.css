@@ -1,103 +1,174 @@
-.con{
-  height: 625px;
-  width: 1100px;
-  background-color: #9baee6;
-  border: 3px solid black;
-  border-radius: 10px;
+/* Main container */
+.con {
+  height: 640px;
+  width: 1200px;
+  background-color: #d6e3f7;
+  border: 3px solid #485b80;
+  border-radius: 15px;
   display: flex;
-  position: relative;
   flex-direction: row;
-  margin-top: 20px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 30px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
+/* Setting button */
+.point-setting {
+  position: relative;
+  height: 40px;
+  width: 40px;
+  bottom: 300px;
+  left: 20px;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.point-setting:hover {
+  background-color: #d9e3f0;
+  transform: scale(1.1);
+}
+
+/* Canvas container */
 .canvas-con {
   height: 500px;
   width: 600px;
-  background-color: #ffffff;
-  border: 3px solid black;
-  border-radius: 10px;
-  align-content: center;
+  background-color: #fff;
+  border: 3px solid;
+  border-radius: 15px;
+  margin-right: 20px;
   position: relative;
-}
-.bar-con {
-  padding: 10px;
-  display: flex;
-  align-items: center;
-  align-content: center;
-  justify-content: center;
-  position: relative;
-}
-.para-con {
-  height: 625px;
-  width: 250px;
-  border: 1px solid black;
-  border-right: 3px solid black;
-  display: flex;
-  justify-content: space-evenly;
-  border-radius: 5px;
-  padding: 0px;
-  align-items: center;
-  position: relative;
-  flex-direction: column;
-}
-.button{
-  padding: 5px;
-}
-.para-but {
-  height: 600px;
-  width: 250px;
-  Top: 10px;
-  bottom: 50px;
-  border: 1px solid black;
-  padding: 10px;
-  display:grid;
-  justify-content:space-around;
-}
-.right_Side{
-  padding: 0px 125px;
-  display:flex;
-  flex-direction: column;
-  align-content: center;
-  justify-content: center;
-}
-.topbuttom{
-  margin: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-label{
-  display: block;
-  font-size: 20px;
-  font-family: 'Gill Sans';
+/* Control bar */
+.bar-con {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
 }
-button{
-  font-family: 'Gill Sans';
-  padding: 5px;
-  font-size: 15px;
-  border-radius: 10px;
-  border: 2px solid black;
-  margin-right: 10px;
-  margin-left: 10px;
-  width: 75px;
+
+/* Parameter container */
+.para-con {
+  height: 640px;
+  width: 300px;
+  border-radius: 15px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-items: center;
+  justify-content: space-around;
+  box-shadow: 5px 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Buttons */
+.button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 8px;
+  border: none;
+  background-color: #3b82f6;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s;
+}
+
+.button:hover {
+  background-color: #8c8f96;
+}
+
+/* Labels */
+.label {
+  font-size: 40px;
+  color: #485b80;
+  text-align: right; /* Align labels to the right */
+}
+
+/* Form elements */
+.select-container,
+.input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Align form elements to the right */
+  margin-bottom: 10px;
+}
+
+select,
+input {
+  padding: 15px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 2px solid #a0aec0;
+  transition: border-color 0.3s;
+  display: flex;
+  flex-direction: column;/* Align form elements to the right */
+  justify-content: center;
   text-align: center;
+  margin-bottom: 10px;
 }
-select{
-  font-family: 'Gill Sans';
-  font-size: 20px;
-  border-radius: 10px;
-  border: 2px solid black;
+
+select:focus,
+input:focus {
+  outline: none;
+  border-color: #3b82f6;
 }
-input{
-  font-family: 'Gill Sans';
-  padding: 5px;
-  font-size: 15px;
-  border-radius: 10px;
-  border: 2px solid black;
-  text-align: center;
+
+/* Top button */
+.topbutton {
+  margin: 5px 0;
+}
+
+/* Range input */
+input[type="color"],
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 30px;
+  background: transparent;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  background: #485b80;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #667da0;
 }
 form{
   display: flex;
-  flex: 0.9;
   flex-direction: column;
-  justify-content: space-evenly;
-  align-content: center;
-  
+  align-items: center;
+}
+
+.settingIcon{
+  height: 20px;
+  width: 20px;
+}
+.dropdown{
+  height: 45px;
+  width: 100px;
+  padding: 12px 24px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  text-align: center;
+}
+.rightSide{
+  margin-top: 30px;
 }

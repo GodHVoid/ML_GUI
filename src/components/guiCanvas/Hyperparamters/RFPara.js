@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import "../guiCanvas.css";
 let parameters = {
   n_trees: 1,
   criterion: "gini",
@@ -10,10 +10,10 @@ let parameters = {
 };
 
 export function RFparameters() {
-  const [nTrees, setTrees] = useState(1);
+  const [nTrees, setTrees] = useState(null);
   const [criterion, setCriterion] = useState("gini");
   const [max_depth, setMaxDepth] = useState(null);
-  const [minSamplesLeaf, setMinLeaf] = useState(1);
+  const [minSamplesLeaf, setMinLeaf] = useState(null);
   const [oblique, setOblique] = useState(null);
 
   parameters.n_trees = nTrees;
@@ -23,22 +23,20 @@ export function RFparameters() {
   parameters.oblique = oblique;
 
   const handleObliqueChange = (e) => {
-    const value = e.target.value.trim(); // Trim any leading/trailing whitespace
-    // Bug issue with turning off oblique unless it is turn into an int
-    // why? because Javascript
-    setOblique(value === "" ? null : parseInt(value, 10)); // Convert empty string to null
+    setOblique(e === "" ? null : parseInt(e, 10));
+  };
+  const handleNTree = (e) => {
+    setTrees(e === "" ? null : parseInt(e, 10));
+  };
+  const handleMinLeaf = (e) => {
+    setMinLeaf(e === "" ? null : parseInt(e, 10));
+  };
+  const handleMaxDepth = (e) => {
+    setMaxDepth(e === "" ? null : parseInt(e, 10));
   };
 
   return (
     <form>
-      <div>
-        <label>N tree: </label>
-        <input
-          value={nTrees}
-          placeholder="default is none"
-          onChange={(e) => setTrees(e.target.value)}
-        />
-      </div>
       <div>
         <label>Criterion: </label>
         <select
@@ -51,28 +49,38 @@ export function RFparameters() {
         </select>
       </div>
       <div>
+        <label>Number of Trees: </label>
+        <input
+          value={nTrees}
+          placeholder="default is none"
+          onChange={(e) => handleNTree(e.target.value)}
+        />
+      </div>
+      <div>
         <label>Max Depth: </label>
         <input
           value={max_depth}
           placeholder="default is none"
-          onChange={(e) => setMaxDepth(e.target.value)}
+          onChange={(e) => handleMaxDepth(e.target.value)}
         />
       </div>
       <div>
-        <label>Min splits: </label>
+        <label>Min Splits: </label>
         <input
           value={minSamplesLeaf}
           placeholder="default is 2"
-          onChange={(e) => setMinLeaf(e.target.value)}
+          onChange={(e) => handleMinLeaf(e.target.value)}
         />
       </div>
       <div>
         <label>Oblique: </label>
-        <input
-          value={oblique !== null ? oblique : ""} // Ensure empty string if null
-          placeholder="0 or 1"
-          onChange={handleObliqueChange}
-        />
+        <select
+          value={oblique}
+          onChange={(e) => handleObliqueChange(e.target.value)}
+        >
+          <option value="0">Off</option>
+          <option value="1">On</option>
+        </select>
       </div>
     </form>
   );

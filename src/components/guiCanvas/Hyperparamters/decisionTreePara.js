@@ -3,16 +3,16 @@ import React, { useState } from "react";
 let parameters = {
   criterion: "",
   min_samples_split: 2,
-  maxDepth: 1,
+  maxDepth: 2,
   n_features: null,
-  maxLeaf: null,
-  oblique: null,
+  maxLeaf: 2,
+  oblique: 0,
 };
 
 export function Dtparameters() {
   const [criterion, setCriterion] = useState("gini");
   const [max_depth, setMaxDepth] = useState(null);
-  const [minSamplesSplit, setMinSplit] = useState(2);
+  const [minSamplesSplit, setMinSplit] = useState(null);
   const [maxLeaf, setMinLeaf] = useState(null);
   const [oblique, setOblique] = useState(null);
 
@@ -23,10 +23,16 @@ export function Dtparameters() {
   parameters.oblique = oblique;
 
   const handleObliqueChange = (e) => {
-    const value = e.target.value.trim(); // Trim any leading/trailing whitespace
-    // Bug issue with turning off oblique unless it is turn into an int
-    // why? because Javascript
-    setOblique(value === "" ? null : parseInt(value, 10)); // Convert empty string to null
+    setOblique(e === "" ? null : parseInt(e, 10));
+  };
+  const handleMaxDepth = (e) => {
+    setMaxDepth(e === "" ? null : parseInt(e, 10));
+  };
+  const handleMinSplit = (e) => {
+    setMinSplit(e === "" ? null : parseInt(e, 10));
+  };
+  const handleMinLeaf = (e) => {
+    setMinLeaf(e === "" ? null : parseInt(e, 10));
   };
 
   return (
@@ -47,33 +53,36 @@ export function Dtparameters() {
         <input
           value={max_depth}
           placeholder="default is none"
-          onChange={(e) => setMaxDepth(e.target.value)}
+          onChange={(e) => handleMaxDepth(e.target.value)}
         />
       </div>
       <div>
-        <label>Min splits: </label>
+        <label>Min Splits: </label>
         <input
           value={minSamplesSplit}
           placeholder="default is 2"
-          onChange={(e) => setMinSplit(e.target.value)}
+          onChange={(e) => handleMinSplit(e.target.value)}
         />
       </div>
       <div>
-        <label>Max leafs: </label>
+        <label>Max Leafs: </label>
         <input
           value={maxLeaf}
           placeholder="default is 2"
-          onChange={(e) => setMinLeaf(e.target.value)}
+          onChange={(e) => handleMinLeaf(e.target.value)}
         />
       </div>
       <div>
         <label>Oblique: </label>
-        <input
-          value={oblique !== null ? oblique : ""} // Ensure empty string if null
-          placeholder="0 or 1"
-          onChange={handleObliqueChange}
-        />
+        <select
+          value={oblique}
+          onChange={(e) => handleObliqueChange(e.target.value)}
+        >
+          <option value="0">Off</option>
+          <option value="1">On</option>
+        </select>
       </div>
+      <div></div>
     </form>
   );
 }
