@@ -249,42 +249,54 @@ function GuiCanvas(props) {
     let misCount = 0;
     let totalLoss = 0;
 
-    if (points.length) {
-      points.forEach((point) => {
-        const predictedProbabilities = model.predict_proba([
-          [point.x, point.y],
-        ]);
-        if (
-          !Array.isArray(predictedProbabilities) ||
-          predictedProbabilities.length === 0
-        ) {
-          console.error("Predicted probabilities are not available or empty.");
-          return; // Handle the error case appropriately
-        }
+    const [X, yTrue] = getXY(points);
+    let yPred = model.predict(X);
+    console.log("Contents of yTrue:", yTrue);
+    console.log("Contents of yPred:", yPred);
 
-        const trueClass = point.classNumber;
-
-        // Add epsilon to predicted probabilities to prevent taking the logarithm of zero
-        const adjustedPredictions = predictedProbabilities.map((prob) =>
-          Math.max(prob, epsilon)
-        );
-
-        // Calculate cross-entropy loss
-        let loss = -Math.log(adjustedPredictions[trueClass]);
-        totalLoss += isNaN(loss) ? 0 : loss;
-
-        const predictedClass = adjustedPredictions.indexOf(
-          Math.max(...adjustedPredictions)
-        );
-        if (predictedClass !== trueClass) {
-          misCount++;
-        }
-      });
+    // Check if yTrue and yPred are arrays and have the same length
+    if (
+      !Array.isArray(yTrue) ||
+      !Array.isArray(yPred) ||
+      yTrue.length !== yPred.length
+    ) {
+      console.error("Invalid input format.");
+      return { misclassified: -1, averageLoss: NaN }; // Return error value
     }
 
-    // Compute average loss
-    let averageLoss = points.length > 0 ? totalLoss / points.length : 0;
-    averageLoss = parseFloat(averageLoss.toFixed(2));
+    for (let i = 0; i < yTrue.length; i++) {
+      const trueClass = yTrue[i];
+      const predictedClass = yPred[i];
+
+      // Check if trueClass and predictedClass are out of range
+      if (
+        trueClass < 0 ||
+        trueClass >= yPred.length ||
+        predictedClass < 0 ||
+        predictedClass >= yPred.length
+      ) {
+        console.error(
+          "True class or predicted class is out of range at index",
+          i
+        );
+        console.log("True class:", trueClass);
+        console.log("Predicted class:", predictedClass);
+        continue;
+      }
+
+      // Calculate cross-entropy loss
+      let loss = -Math.log(Math.max(epsilon, yPred[i][trueClass]));
+      totalLoss += isNaN(loss) ? 0 : loss;
+
+      // Check for misclassification
+      if (trueClass !== predictedClass) {
+        misCount++;
+      }
+    }
+
+    // Compute average loss and round to 5 significant figures
+    let averageLoss = X.length > 0 ? totalLoss / X.length : 0;
+    averageLoss = parseFloat(averageLoss.toFixed(5));
 
     setEntropyLoss(averageLoss);
     setMisclassification(misCount);
