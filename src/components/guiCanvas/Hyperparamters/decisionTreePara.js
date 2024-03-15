@@ -1,5 +1,14 @@
 import React, { useState } from "react";
+//import [parameters] from algort
+//parameters = { para1,para2 ,....}
+// if name:
+// algro.parameters
+// # of inputs = # of parameters
+// [para1,para2,...]
+// para1 = string array
+// para1 =  int
 
+// return (form-div-dselect)
 let parameters = {
   criterion: "",
   min_samples_split: "",
@@ -44,8 +53,26 @@ export function Dtparameters() {
     parameters.criterion = e;
   };
 
+  //doselect
+  //div
+  // seclt
+  // remember div just in case
+
   return (
     <form>
+      {/* for args array */}
+      {/* {parameters.map((value)=> (<>{typeof(value) === "Array"} ? <doselect(value)><d/>
+        <label>{value.name}: </label>
+      </>
+        <select
+          value={value.value}
+          onChange={(e) => handleCriterion(e.target.value)}
+        >
+          <option value="gini">Gini</option>
+          <option value="entropy">Entropy</option>
+          <option value="classification_error">Classification Error</option>
+        </select>
+      ))} */}
       <div>
         <label>Criterion: </label>
         <select
@@ -66,7 +93,7 @@ export function Dtparameters() {
         />
       </div>
       <div>
-        <label>Min Splits: </label>
+        <label>Min Samples Splits: </label>
         <input
           value={minSamplesSplit}
           placeholder="default is 2"

@@ -70,7 +70,7 @@ export function RFparameters() {
         />
       </div>
       <div>
-        <label>Min Splits: </label>
+        <label>Min Samples Splits: </label>
         <input
           value={minSamplesSplit}
           placeholder="default is 2"

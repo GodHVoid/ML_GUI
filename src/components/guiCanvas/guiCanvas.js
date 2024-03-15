@@ -1,13 +1,15 @@
 import "./guiCanvas.css";
-import React, { useEffect, useRef, useState } from "react";
-import { rule } from "./ML_Algorithms/algoSelector.js";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { train, predictDataset } from "./ML_Algorithms/algoSelector.js";
 import { Dtparameters, dtpara } from "./Hyperparamters/decisionTreePara";
 import { RFparameters, RFpara } from "./Hyperparamters/RFPara.js";
 import { PopupWindow } from "./pointSetting/settingWindow.js";
 import settingImage from "./Icons/settings.png";
+import debounce from "lodash/debounce";
 
 const point_color = ["#e96666", "#9ce472", "#859adf", "#cc49b0"]; // Define point_color array
 const background_color = ["#fa0505", "#3a9904", "#0b3cdb", "#a30581"];
+const pointRadius = 8; // Set the radius for point sensitivity
 
 function GuiCanvas(props) {
   const canvasRef = useRef(null);
@@ -25,6 +27,8 @@ function GuiCanvas(props) {
   const [isMovingPoints, setIsMovingPoints] = useState(false); // State to track if moving points mode is enabled
   const [misclassification, setMisclassification] = useState(0);
   const [entropyLoss, setEntropyLoss] = useState(0.0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [numClasses, setNumClasses] = useState([0, 0, 0, 0]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,10 +37,6 @@ function GuiCanvas(props) {
     const context = canvas.getContext("2d");
     context.lineWidth = 2;
   }, []);
-
-  useEffect(() => {
-    runAlgorithm(); // Run the algorithm whenever selectAlgo changes
-  }, [selectAlgo]);
 
   function drawCircle(x, y, color) {
     const canvas = canvasRef.current;
@@ -93,28 +93,34 @@ function GuiCanvas(props) {
       setPoints([...points, newPoint]);
       drawCircle(offsetX, offsetY, color);
     } else if (mode === "Erase") {
-      const filteredPoints = points.filter(
-        (point) => !isPointClicked(offsetX, offsetY, point)
-      );
-      setPoints(filteredPoints);
-      redrawCanvas();
+      erasePoint(offsetX, offsetY);
     }
   }
 
-  function redrawCanvas() {
+  function erasePoint(x, y) {
+    const filteredPoints = points.filter(
+      (point) => !isPointClicked(x, y, point)
+    );
+    setPoints(filteredPoints);
+
+    redrawCanvas(filteredPoints);
+  }
+
+  function redrawCanvas(listPoint) {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
     if (imageData) {
       context.putImageData(imageData, 0, 0);
     }
-    points.forEach((point) => {
+    listPoint.forEach((point) => {
       drawCircle(point.x, point.y, point.color);
     });
   }
 
   function handleMouseUp() {
     if (isDragging) {
-      redrawCanvas();
+      redrawCanvas(points);
       //runAlgorithm();
     }
     setIsDragging(false);
@@ -139,71 +145,114 @@ function GuiCanvas(props) {
       //
       const context = canvas.getContext("2d");
       context.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-      redrawCanvas(); // Redraw the canvas with the updated points
+      redrawCanvas(points); // Redraw the canvas with the updated points
     }
   }
 
   function isPointClicked(x, y, point) {
     const distance = Math.sqrt((x - point.x) ** 2 + (y - point.y) ** 2);
-    return distance <= 4;
+    return distance <= pointRadius;
+  }
+
+  function plot(dataset, predictions, model) {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Create a new ImageData object to hold the pixel data
+    const newImageData = context.createImageData(width, height);
+    const data = newImageData.data;
+
+    for (let i = 0; i < dataset.length; i++) {
+      const coordinates = dataset[i];
+      const predictedClass = predictions[i];
+      const colorIndex = predictedClass * 4;
+
+      // Set the predicted color to the canvas pixel
+      const colorHex = point_color[predictedClass];
+      const pixelColor = parseInt(colorHex.substring(1), 16);
+
+      const x = coordinates[0];
+      const y = coordinates[1];
+
+      const dataIndex = (y * width + x) * 4;
+      data[dataIndex] = parseInt(colorHex.substring(1, 3), 16);
+      data[dataIndex + 1] = parseInt(colorHex.substring(3, 5), 16);
+      data[dataIndex + 2] = parseInt(colorHex.substring(5, 7), 16);
+      data[dataIndex + 3] = 255; // Alpha value
+    }
+
+    context.putImageData(newImageData, 0, 0);
+    setImageData(newImageData);
+    console.log(newImageData);
+    categoricalCrossEntropyLoss(model, points);
+    updateCanvas();
+  }
+
+  function getDataset() {
+    let dataset = [];
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    const width = canvas.width;
+    const height = canvas.height;
+
+    for (let y = 0; y < height; y++) {
+      dataset[y] = [];
+      for (let x = 0; x < width; x++) {
+        dataset[y][x] = [x, y];
+      }
+    }
+    //console.log(dataset);
+    return dataset;
   }
 
   async function runAlgorithm() {
     try {
-      setImageData(null);
-      const [X, Y] = getXY();
-      let rules;
-
+      //setImageData(null);
+      setIsLoading(true); // Set loading state to true
+      //make points into a dataset
+      // After updating points state
+      setPoints((newPoints) => [...newPoints]); // Force state update
+      const [trainX, trainY] = getXY();
+      let model;
+      let dataset;
       if (points.length) {
-        const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
-        const width = canvas.width;
-        const height = canvas.height;
-
-        // Create a new ImageData object to hold the pixel data
-        const newImageData = context.createImageData(width, height);
-        const data = newImageData.data;
-
-        // Clear the canvas
-        context.clearRect(0, 0, width, height);
-
-        rules =
+        //get trained model
+        model =
           selectAlgo === "Decision Tree"
-            ? rule(X, Y, dtpara(), selectAlgo)
-            : rule(X, Y, RFpara(), selectAlgo);
-        console.log(rules);
-        console.log(RFpara);
-        for (let y = 0; y < height; y++) {
-          for (let x = 0; x < width; x++) {
-            const predictedClass = rules.predict([[x, y]])[0];
-            const colorIndex = predictedClass * 4;
+            ? train(trainX, trainY, dtpara(), selectAlgo)
+            : train(trainX, trainY, RFpara(), selectAlgo);
+        console.log(model);
 
-            data[(y * width + x) * 4] = parseInt(
-              point_color[predictedClass].substring(1, 3),
-              16
-            );
-            data[(y * width + x) * 4 + 1] = parseInt(
-              point_color[predictedClass].substring(3, 5),
-              16
-            );
-            data[(y * width + x) * 4 + 2] = parseInt(
-              point_color[predictedClass].substring(5, 7),
-              16
-            );
-            data[(y * width + x) * 4 + 3] = 255;
-          }
-        }
-        context.putImageData(newImageData, 0, 0);
-        setImageData(newImageData);
-        setPreviousImageData(newImageData);
-        setPrevPoints(points);
-        categoricalCrossEntropyLoss(rules, points);
-        // Redraw all points
-        redrawCanvas();
+        //get canvas grid
+        dataset = getDataset();
+        // Flatten the dataset for model prediction
+        const flattenedDataset = dataset.flat();
+
+        // Predict colors for all pixels in the flattened dataset
+        const predictions = predictDataset(flattenedDataset, model);
+
+        //plot points and colors
+        plot(flattenedDataset, predictions, model);
       }
     } catch (error) {
       console.error("Error in runAlgorithm:", error);
       // Handle the error appropriately, e.g., display an error message to the user
+    } finally {
+      setIsLoading(false); // Ensure loading state is set back to false even if there's an error
+    }
+  }
+
+  function updateCanvas() {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    if (imageData) {
+      context.putImageData(imageData, 0, 0);
+      points.forEach((point) => {
+        drawCircle(point.x, point.y, point.color);
+      });
     }
   }
 
@@ -215,19 +264,6 @@ function GuiCanvas(props) {
       Y.push(point.classNumber);
     });
     return [X, Y];
-  }
-
-  function toggleMode() {
-    if (mode === "Add") {
-      setIsMovingPoints(false); // Switch to adding points mode
-      setMode("Erase");
-    } else if (mode === "Erase") {
-      setIsMovingPoints(false); // Switch to erasing points mode
-      setMode("Move");
-    } else {
-      setIsMovingPoints(true); // Switch to moving points mode
-      setMode("Add");
-    }
   }
 
   const togglePopup = () => {
@@ -244,10 +280,27 @@ function GuiCanvas(props) {
     clearCanvas();
   };
 
+  const handleRunButtonClick = async () => {
+    if (!isLoading) {
+      try {
+        setIsLoading(true);
+        await runAlgorithm();
+        runAlgorithm();
+        redrawCanvas(points);
+      } catch (error) {
+        console.error("Error running algorithm:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
   function categoricalCrossEntropyLoss(model, points) {
-    let epsilon = 1e-15; // Small constant to prevent taking the logarithm of zero
     let misCount = 0;
-    let totalLoss = 0;
+    let class1 = 0;
+    let class2 = 0;
+    let class3 = 0;
+    let class4 = 0;
 
     const [X, yTrue] = getXY(points);
     let yPred = model.predict(X);
@@ -265,41 +318,32 @@ function GuiCanvas(props) {
     }
 
     for (let i = 0; i < yTrue.length; i++) {
-      const trueClass = yTrue[i];
-      const predictedClass = yPred[i];
-
-      // Check if trueClass and predictedClass are out of range
-      if (
-        trueClass < 0 ||
-        trueClass >= yPred.length ||
-        predictedClass < 0 ||
-        predictedClass >= yPred.length
-      ) {
-        console.error(
-          "True class or predicted class is out of range at index",
-          i
-        );
-        console.log("True class:", trueClass);
-        console.log("Predicted class:", predictedClass);
-        continue;
-      }
-
-      // Calculate cross-entropy loss
-      let loss = -Math.log(Math.max(epsilon, yPred[i][trueClass]));
-      totalLoss += isNaN(loss) ? 0 : loss;
+      const trueClass = parseInt(yTrue[i]);
+      const predictedClass = parseInt(yPred[i]);
 
       // Check for misclassification
       if (trueClass !== predictedClass) {
         misCount++;
       }
+
+      if (trueClass === 0) {
+        class1++;
+      } else if (trueClass === 1) {
+        class2++;
+      } else if (trueClass === 2) {
+        class3++;
+      } else {
+        class4++;
+      }
     }
 
-    // Compute average loss and round to 5 significant figures
-    let averageLoss = X.length > 0 ? totalLoss / X.length : 0;
-    averageLoss = parseFloat(averageLoss.toFixed(5));
+    // // Compute average loss and round to 5 significant figures
+    // let averageLoss = X.length > 0 ? totalLoss / X.length : 0;
+    // averageLoss = parseFloat(averageLoss.toFixed(5));
 
-    setEntropyLoss(averageLoss);
+    // setEntropyLoss(averageLoss);
     setMisclassification(misCount);
+    setNumClasses([class1, class2, class3, class4]);
   }
 
   return (
@@ -317,8 +361,8 @@ function GuiCanvas(props) {
           </select>
           <label>Hyperparameters:</label>
           {selectAlgo === "Decision Tree" ? <Dtparameters /> : <RFparameters />}
-          <button className="button" onClick={runAlgorithm}>
-            Run
+          <button className="button" onClick={handleRunButtonClick}>
+            {isLoading ? "Running..." : "Run"}
           </button>
         </div>
         <div className="rightSide">
@@ -332,11 +376,7 @@ function GuiCanvas(props) {
           <div className="bar-con">
             <div>
               <label>Class:</label>
-              <select
-                className="dropdown"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-              >
+              <select value={color} onChange={(e) => setColor(e.target.value)}>
                 <option style={{ backgroundColor: "#fa0505" }} value="#fa0505">
                   Red
                 </option>
@@ -351,13 +391,26 @@ function GuiCanvas(props) {
                 </option>
               </select>
             </div>
-            <button className="button" onClick={toggleErase}>
-              {isUndo ? "Undo" : "Clear"}
-            </button>
-            <button className="button" onClick={toggleMode}>
+            {/* <button className="button" onClick={toggleMode}>
               {mode === "Add" && "Add Point"}
               {mode === "Erase" && "Erase Point"}
               {mode === "Move" && "Move Point"}
+
+            </button> */}
+            <div>
+              <label>Mode: </label>
+              <select value={mode} onChange={(e) => setMode(e.target.value)}>
+                <option value="Add">Add</option>
+                <option value="Erase">Erase</option>
+                <option value="Move">Move</option>
+              </select>
+            </div>
+            <button
+              style={{ backgroundColor: "#f70a0a" }}
+              className="button"
+              onClick={toggleErase}
+            >
+              {isUndo ? "Undo" : "Clear"}
             </button>
           </div>
         </div>
@@ -368,8 +421,11 @@ function GuiCanvas(props) {
             {pointOption && <PopupWindow />}
           </button>
           <p className="loss">
-            Misclassified points: {misclassification}
-            <p>Entropy Loss: {entropyLoss}</p>
+            <p>Misclassified points: {misclassification}</p>
+            <p style={{ color: "#fa0505" }}>Class 1 : {numClasses[0]}</p>
+            <p style={{ color: "#3a9904" }}>Class 2 : {numClasses[1]}</p>
+            <p style={{ color: "#0b3cdb" }}>Class 3 : {numClasses[2]}</p>
+            <p style={{ color: "#a30581" }}>Class 4 : {numClasses[3]}</p>
           </p>
         </div>
       </div>
@@ -378,3 +434,33 @@ function GuiCanvas(props) {
 }
 
 export default GuiCanvas;
+
+// in case i forget how to color the canvas
+// for (let y = 0; y < height; y++) {
+//   for (let x = 0; x < width; x++) {
+//     const predictedClass = rules.predict([[x, y]])[0];
+//     //const predictedClass = predict([x,y], rules)
+//     const colorIndex = predictedClass * 4;
+
+//     data[(y * width + x) * 4] = parseInt(
+//       point_color[predictedClass].substring(1, 3),
+//       16
+//     );
+//     data[(y * width + x) * 4 + 1] = parseInt(
+//       point_color[predictedClass].substring(3, 5),
+//       16
+//     );
+//     data[(y * width + x) * 4 + 2] = parseInt(
+//       point_color[predictedClass].substring(5, 7),
+//       16
+//     );
+//     data[(y * width + x) * 4 + 3] = 255;
+//   }
+// }
+// //data = plot(height, width, rules, data);
+// context.putImageData(newImageData, 0, 0);
+// setImageData(newImageData);
+// setPreviousImageData(newImageData);
+// setPrevPoints(points);
+// categoricalCrossEntropyLoss(rules, points);
+// Redraw all points

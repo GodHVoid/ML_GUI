@@ -6,7 +6,7 @@ import { DecisionTreeClassifier } from "./decisionTree.js";
 // this file is intended to run a random forest algorithm
 export class RandomForest {
   constructor({
-    n_trees,
+    n_trees = 1,
     criterion,
     max_depth,
     min_samples_split,
@@ -55,6 +55,7 @@ export class RandomForest {
 
     return [X_sample, y_sample];
   }
+
   predict(X) {
     // Check if trees are not trained yet
     if (this.trees.length === 0) {
